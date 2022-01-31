@@ -41,7 +41,7 @@ class ConnectionsPoolTest {
 		addConnections(4);
 		try {
 			connections.getConnection(123);
-			fail("There should be NullPointerExepction");
+			fail("There should be NullPointerException");
 		} catch (NullPointerException e) {
 			
 		}
