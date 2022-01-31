@@ -9,6 +9,10 @@ public class ConnectionsPoolImpl implements ConnectionsPool {
 		 Connection connection;
 		 Node prev;
 		 Node next;
+		 
+		 Node(Connection c) {
+			 this.connection = c;
+		 }
 	}
 	private static class ConnectionsList {
 		Node head;
@@ -24,13 +28,49 @@ public class ConnectionsPoolImpl implements ConnectionsPool {
 	@Override
 	public boolean addConnection(Connection connection) {
 		// TODO Auto-generated method stub
-		return false;
+		Node newNode = new Node(connection);
+		if (mapConnections.size() == connectionsPoolLimit) {
+			mapConnections.remove(list.head.connection.getId());
+			list.head.next.prev = null;
+			list.head = list.head.next;
+		}
+		if (list.head == null) {
+			list.head = list.tail = newNode;
+			mapConnections.put(connection.getId(), newNode);
+			return true;
+		}
+		insertTail(newNode);
+		
+		mapConnections.put(connection.getId(), newNode);
+		return true;
 	}
 
 	@Override
 	public Connection getConnection(int id) {
 		// TODO Auto-generated method stub
-		return null;
+		Connection resConnection = mapConnections.containsKey(id) ? mapConnections.get(id).connection : null;
+		
+		Node resNode = mapConnections.get(id);
+		if (resNode.next == null) {
+			return resConnection;
+		}
+		if (resNode.prev == null) {
+			resNode.next.prev = null;
+			list.head = resNode.next;
+		} else {
+			resNode.prev.next = resNode.next;
+			resNode.next.prev = resNode.prev;
+		}
+		insertTail(resNode);
+		resNode.next = null;
+		
+		return resConnection;
+	}
+	
+	private void insertTail(Node node) {
+		list.tail.next = node;
+		node.prev = list.tail;
+		list.tail = node;
 	}
 
 }
