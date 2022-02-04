@@ -22,11 +22,16 @@ class ConnectionsPoolTest {
 	@Test
 	void testAddConnection() {
 		addConnections(1);
-		assertEquals(1, connections.mapConnections.size());
+		assertEquals(1, connections.size());
+		connections.addConnection(new Connection(125, "10.0.0.125", 80));
+		connections.addConnection(new Connection(125, "10.0.0.125", 80));
+		Connection ac = new Connection(123, "10.0.0.1", 80);
+		connections.addConnection(ac);
+		assertEquals(123, connections.getNewestConnectionInfo().getId());
 		addConnections(4);
-		assertEquals(5, connections.mapConnections.size());
+		assertEquals(5, connections.size());
 		addConnections(1);
-		assertEquals(5, connections.mapConnections.size());
+		assertEquals(5, connections.size());
 	}
 
 	@Test
@@ -35,17 +40,12 @@ class ConnectionsPoolTest {
 		addConnections(2);
 		assertEquals(80, connections.getConnection(123).getPort());
 		addConnections(4);
-		assertTrue(connections.mapConnections.containsKey(123));
+		connections.addConnection(new Connection(123, "10.0.0.1", 80));
+		assertEquals(123, connections.getNewestConnectionInfo().getId());
 		connections.addConnection(new Connection(125, "10.0.0.125", 80));
+		addConnections(5);
 		connections.getConnection(125);
-		addConnections(4);
-		try {
-			connections.getConnection(123);
-			fail("There should be NullPointerException");
-		} catch (NullPointerException e) {
-			
-		}
-		assertTrue(connections.mapConnections.containsKey(125));
+		assertEquals(125, connections.getNewestConnectionInfo().getId());
 		
 	}
 	

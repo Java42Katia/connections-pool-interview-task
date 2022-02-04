@@ -17,6 +17,44 @@ public class ConnectionsPoolImpl implements ConnectionsPool {
 	private static class ConnectionsList {
 		Node head;
 		Node tail;
+		int size = 0;
+		
+		boolean add(Node node) {
+			if (this.size == 0) {
+				this.head = this.tail = node;
+			}
+			if (this.size == 5) {
+				this.tail = this.tail.prev;
+				this.tail.next = null;
+				size--;
+			}
+			insertNewest(node);
+			size++;
+			return true;
+		}
+		
+		void update(Node node) {
+			if (node != null && node.prev != null) {
+				if (node.next != null) {
+				node.next.prev = node.prev;
+				node.prev.next = node.next;
+				}
+				insertNewest(node);
+			}
+		}
+		
+		private void insertNewest(Node node) {
+			this.head.prev = node;
+			node.next = this.head;
+			this.head = node;
+		}
+		public int size() {
+			return this.size;
+		}
+
+		public Node getOldestNode() {
+			return this.tail;
+		}
 	}
 	ConnectionsList list = new ConnectionsList();
 	HashMap<Integer, Node> mapConnections = new HashMap<>();
@@ -29,18 +67,14 @@ public class ConnectionsPoolImpl implements ConnectionsPool {
 	public boolean addConnection(Connection connection) {
 		// TODO Auto-generated method stub
 		Node newNode = new Node(connection);
-		if (mapConnections.size() == connectionsPoolLimit) {
-			mapConnections.remove(list.head.connection.getId());
-			list.head.next.prev = null;
-			list.head = list.head.next;
+		if (mapConnections.containsValue(newNode)) {
+			
+		} else {
+			list.add(newNode);
+			if (mapConnections.size() == 5) {
+				mapConnections.remove(list.getOldestNode());
+			}
 		}
-		if (list.head == null) {
-			list.head = list.tail = newNode;
-			mapConnections.put(connection.getId(), newNode);
-			return true;
-		}
-		insertTail(newNode);
-		
 		mapConnections.put(connection.getId(), newNode);
 		return true;
 	}
@@ -48,29 +82,21 @@ public class ConnectionsPoolImpl implements ConnectionsPool {
 	@Override
 	public Connection getConnection(int id) {
 		// TODO Auto-generated method stub
-		Connection resConnection = mapConnections.containsKey(id) ? mapConnections.get(id).connection : null;
 		
 		Node resNode = mapConnections.get(id);
-		if (resNode.next == null) {
-			return resConnection;
-		}
-		if (resNode.prev == null) {
-			resNode.next.prev = null;
-			list.head = resNode.next;
-		} else {
-			resNode.prev.next = resNode.next;
-			resNode.next.prev = resNode.prev;
-		}
-		insertTail(resNode);
-		resNode.next = null;
+		list.update(resNode);
 		
-		return resConnection;
+		
+		return mapConnections.containsKey(id) ? mapConnections.get(id).connection : null;
 	}
 	
-	private void insertTail(Node node) {
-		list.tail.next = node;
-		node.prev = list.tail;
-		list.tail = node;
+	
+	public Connection getNewestConnectionInfo() {
+		return list.head.connection;
+	}
+ 
+	public int size() {
+		return this.list.size();
 	}
 
 }
